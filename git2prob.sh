@@ -17,6 +17,10 @@ fi
 REPO=$1
 PROPFILE=$2
 
+if [ -z $PROPFILE ]; then
+        rm $PROPFILE
+fi
+
 #create a valid temporary property file
 echo -ne 'branches=' > ${PROPFILE}.tmp
 
