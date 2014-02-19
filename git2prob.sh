@@ -1,37 +1,60 @@
 #!/bin/bash
-#This script creates a property file with all branches available in a git repository
-#The proberty file can be used f.e. by jenkins to give the option which branch to use 
-#for a build.
+#This script creates a property file with all branches and/or all tags available in a git 
+#repository. The property file can be used f.e. by jenkins to give the option which branch 
+#or tag to use for a build.
 #
 #It is recommended to use this script with cron, so the properties file is updated as
-#new branches appear (or old ones disappear) in the repo.
+#new branches appear (or old ones disappear) in the repo. Using bash is recommended as well,
+#as the script might have issues with sh.
 #
-#USAGE: sh git2prop.sh [Path or URL to git repository] [Path to properties file]
+#USAGE: sh git2prop.sh [-t] [-b] [-p property-file] [-r git-repository]
+# [-t] if specified tags will be added to the 'tags' property 
+# [-b] if specified branches will be added to the 'branches' property
+# [-p property-file] path to the property file to create/update
+# [-r repository] URL or path to the git repository
 
-#leave script if mandatory arguments not present
-if [ -z "$1" ] || [ -z "$2" ]; then
-	echo usage: $0 path-to-repository path-to-properties-file
-	exit
+REPO=
+PROPFILE=
+ADDBRANCHES=0
+ADDTAGS=0
+
+while getopts ":tbp:r:" opt; do
+  case $opt in
+    r)
+	  REPO=$OPTARG
+	  ;;
+	p)
+	  PROPFILE=$OPTARG
+	  ;;
+    b)
+	  ADDBRANCHES=1
+	  ;;
+    t)
+      ADDTAGS=1 
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+if [ -z $REPO ] || [ -z PROPFILE ]; then
+        echo "usage: $0 [-t] [-b] [-p property-file] [-r git-repository]"
+        exit
 fi
 
-REPO=$1
-PROPFILE=$2
+> ${PROPFILE}
 
-if [ -e $PROPFILE ]; then
-        rm $PROPFILE
+if [ $ADDBRANCHES -gt 0 ]; then
+	#create a valid temporary property file
+	echo -ne 'branches=' >> ${PROPFILE}
+	#we need 'origin' instead of 'ref/heads'
+	/usr/bin/git ls-remote -h $REPO | /usr/bin/awk '{print $2}' | /bin/sed s%^refs/heads%origin% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
 fi
 
-#create a valid temporary property file
-echo -ne 'branches=' > ${PROPFILE}.tmp
-
-#we need 'origin' instead of 'ref/heads'
-/usr/bin/git ls-remote -h $REPO | /usr/bin/awk '{print $2}' | /usr/bin/sed s%^refs/heads%origin% >> ${PROPFILE}.tmp
-
-#jenkins can not handle newlines as seperators
-/usr/bin/tr '\n' ',' < ${PROPFILE}.tmp > $PROPFILE
-
-echo -ne 'tags=' >> ${PROPFILE}.tmp
-
-
-#cleanup
-rm ${PROPFILE}.tmp
+if [ $ADDTAGS -gt 0 ]; then
+	#add tags property for all tags 
+	echo -ne '\ntags=' >> ${PROPFILE}
+	#here we only need the 'tags' part before the tag-name
+	/usr/bin/git ls-remote -t $REPO | /usr/bin/awk '/refs\/tags\/v/ {print $2}' | /bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
+fi
