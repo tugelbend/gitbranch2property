@@ -9,7 +9,9 @@
 #
 #USAGE: sh git2prop.sh [-t] [-b] [-p property-file] [-r git-repository]
 # [-t] if specified tags will be added to the 'tags' property 
+# [-T filter-string] specified string will be used as prefix to filter tags
 # [-b] if specified branches will be added to the 'branches' property
+# [-B filter-string] specified string will be used as prefix to filter branches
 # [-p property-file] path to the property file to create/update
 # [-r repository] URL or path to the git repository
 
@@ -17,8 +19,10 @@ REPO=
 PROPFILE=
 ADDBRANCHES=0
 ADDTAGS=0
+TPREFIX=""
+BPREFIX=""
 
-while getopts ":tbp:r:" opt; do
+while getopts ":tbT:B:p:r:" opt; do
   case $opt in
     r)
 	  REPO=$OPTARG
@@ -30,10 +34,17 @@ while getopts ":tbp:r:" opt; do
 	  ADDBRANCHES=1
 	  ;;
     t)
-      ADDTAGS=1 
+      ADDTAGS=1
       ;;
+    T)
+	  TPREFIX=$OPTARG
+	  ;;
+	B)
+	  BPREFIX=$OPTARG
+	  ;;	
     \?)
       echo "Invalid option: -$OPTARG" >&2
+      exit 1
       ;;
   esac
 done
@@ -48,13 +59,15 @@ fi
 if [ $ADDBRANCHES -gt 0 ]; then
 	#create a valid temporary property file
 	echo -ne 'branches=' >> ${PROPFILE}
+	BFILTER="/refs\/heads\/${BPREFIX}/ {print \$2}"
 	#we need 'origin' instead of 'ref/heads'
-	/usr/bin/git ls-remote -h $REPO | /usr/bin/awk '{print $2}' | /bin/sed s%^refs/heads%origin% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
+	/usr/bin/git ls-remote -h $REPO | /usr/bin/awk "${BFILTER}" | /bin/sed s%^refs/heads%origin% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
 fi
 
 if [ $ADDTAGS -gt 0 ]; then
 	#add tags property for all tags 
 	echo -ne '\ntags=' >> ${PROPFILE}
+	TFILTER="/refs\/tags\/${TPREFIX}/ {print \$2}"
 	#here we only need the 'tags' part before the tag-name
-	/usr/bin/git ls-remote -t $REPO | /usr/bin/awk '/refs\/tags\/v/ {print $2}' | /bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
+	/usr/bin/git ls-remote -t $REPO | /usr/bin/awk "${TFILTER}" | /bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
 fi
