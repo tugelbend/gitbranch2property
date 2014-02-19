@@ -17,7 +17,7 @@ fi
 REPO=$1
 PROPFILE=$2
 
-if [ -z $PROPFILE ]; then
+if [ -e $PROPFILE ]; then
         rm $PROPFILE
 fi
 
@@ -29,6 +29,9 @@ echo -ne 'branches=' > ${PROPFILE}.tmp
 
 #jenkins can not handle newlines as seperators
 /usr/bin/tr '\n' ',' < ${PROPFILE}.tmp > $PROPFILE
+
+echo -ne 'tags=' >> ${PROPFILE}.tmp
+
 
 #cleanup
 rm ${PROPFILE}.tmp
