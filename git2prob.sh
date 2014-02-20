@@ -52,7 +52,7 @@ while getopts ":tbT:B:p:r:" opt; do
   esac
 done
 
-if [ -z $REPO ] || [ -z PROPFILE ]; then
+if [ -z $REPO ] || [ -z $PROPFILE ]; then
         echo "usage: $0 [-t] [-T tag-prefix] [-b] [-B branch-prefix] [-p property-file] [-r git-repository]"
         exit
 fi
