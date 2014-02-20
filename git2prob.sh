@@ -11,10 +11,10 @@
 #	   first). If the repository is remote we can get tags only in alphabetical order.
 #
 #USAGE: sh git2prop.sh [-t] [-b] [-p property-file] [-r git-repository]
-# [-t] if specified tags will be added to the 'tags' property 
-# [-T filter-string] specified string will be used as prefix to filter tags
-# [-b] if specified branches will be added to the 'branches' property
-# [-B filter-string] specified string will be used as prefix to filter branches
+# [-t] tags will be added to the 'tags' property (optional) 
+# [-T tag-prefix] specified string will be used as prefix to filter tags (optional)
+# [-b] branches will be added to the 'branches' property (optional)
+# [-B branch-prefix] specified string will be used as prefix to filter branches (optional)
 # [-p property-file] full path to the property file to create/update
 # [-r repository] URL or full path to the git repository
 
@@ -28,23 +28,23 @@ BPREFIX=""
 while getopts ":tbT:B:p:r:" opt; do
   case $opt in
     r)
-	  REPO=$OPTARG
-	  ;;
-	p)
-	  PROPFILE=$OPTARG
-	  ;;
+      REPO=$OPTARG
+      ;;
+    p)
+      PROPFILE=$OPTARG
+      ;;
     b)
-	  ADDBRANCHES=1
-	  ;;
+      ADDBRANCHES=1
+      ;;
     t)
       ADDTAGS=1
       ;;
     T)
-	  TPREFIX=$OPTARG
-	  ;;
-	B)
-	  BPREFIX=$OPTARG
-	  ;;	
+      TPREFIX=$OPTARG
+      ;;
+    B)
+      BPREFIX=$OPTARG
+      ;;	
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1
@@ -53,7 +53,7 @@ while getopts ":tbT:B:p:r:" opt; do
 done
 
 if [ -z $REPO ] || [ -z PROPFILE ]; then
-        echo "usage: $0 [-t] [-b] [-p property-file] [-r git-repository]"
+        echo "usage: $0 [-t] [-T tag-prefix] [-b] [-B branch-prefix] [-p property-file] [-r git-repository]"
         exit
 fi
 
@@ -75,6 +75,7 @@ if [ $ADDTAGS -gt 0 ]; then
 		#repo is local, we can sort tags by date
 		TFILTER="/refs\/tags\/${TPREFIX}/ {print \$1}"
 		cd $REPO
+		#here we only need the 'tags' part before the tag-name
 		/usr/bin/git for-each-ref --sort=-taggerdate --format '%(refname)' refs/tags | /usr/bin/awk "${TFILTER}" |/bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
 	else
 		#repo is remote, we will get tags in alphabetical order
