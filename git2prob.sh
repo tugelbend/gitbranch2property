@@ -7,13 +7,16 @@
 #new branches appear (or old ones disappear) in the repo. Using bash is recommended as well,
 #as the script might have issues with sh.
 #
+#Note: If the git repository is local, tags will be written ordered by creation date (newest 
+#	   first). If the repository is remote we can get tags only in alphabetical order.
+#
 #USAGE: sh git2prop.sh [-t] [-b] [-p property-file] [-r git-repository]
 # [-t] if specified tags will be added to the 'tags' property 
 # [-T filter-string] specified string will be used as prefix to filter tags
 # [-b] if specified branches will be added to the 'branches' property
 # [-B filter-string] specified string will be used as prefix to filter branches
-# [-p property-file] path to the property file to create/update
-# [-r repository] URL or path to the git repository
+# [-p property-file] full path to the property file to create/update
+# [-r repository] URL or full path to the git repository
 
 REPO=
 PROPFILE=
@@ -67,7 +70,16 @@ fi
 if [ $ADDTAGS -gt 0 ]; then
 	#add tags property for all tags 
 	echo -ne '\ntags=' >> ${PROPFILE}
-	TFILTER="/refs\/tags\/${TPREFIX}/ {print \$2}"
-	#here we only need the 'tags' part before the tag-name
-	/usr/bin/git ls-remote -t $REPO | /usr/bin/awk "${TFILTER}" | /bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
+	
+	if [ $REPO == "/*" ]; then
+		#repo is local, we can sort tags by date
+		TFILTER="/refs\/tags\/${TPREFIX}/ {print \$1}"
+		cd $REPO
+		/usr/bin/git for-each-ref --sort=-taggerdate --format '%(refname)' refs/tags | /usr/bin/awk "${TFILTER}" |/bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
+	else
+		#repo is remote, we will get tags in alphabetical order
+		TFILTER="/refs\/tags\/${TPREFIX}/ {print \$2}"
+		#here we only need the 'tags' part before the tag-name
+		/usr/bin/git ls-remote -t $REPO | /usr/bin/awk "${TFILTER}" | /bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
+	fi
 fi
