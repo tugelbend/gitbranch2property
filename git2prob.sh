@@ -71,7 +71,7 @@ if [ $ADDTAGS -gt 0 ]; then
 	#add tags property for all tags 
 	echo -ne '\ntags=' >> ${PROPFILE}
 	
-	if [ $REPO == "/*" ]; then
+	if [[ "$REPO" =~ ^/.* ]]; then
 		#repo is local, we can sort tags by date
 		TFILTER="/refs\/tags\/${TPREFIX}/ {print \$1}"
 		cd $REPO
