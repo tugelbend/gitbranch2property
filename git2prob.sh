@@ -60,8 +60,8 @@ fi
 > ${PROPFILE}
 
 if [ $ADDBRANCHES -gt 0 ]; then
-	#create a valid temporary property file
-	echo -ne 'branches=' >> ${PROPFILE}
+	#add branches property for all branches 
+  echo -ne 'branches=' >> ${PROPFILE}
 	BFILTER="/refs\/heads\/${BPREFIX}/ {print \$2}"
 	#we need 'origin' instead of 'ref/heads'
 	/usr/bin/git ls-remote -h $REPO | /usr/bin/awk "${BFILTER}" | /bin/sed s%^refs/heads%origin% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
