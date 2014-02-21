@@ -10,7 +10,7 @@
 #Note: If the git repository is local, tags will be written ordered by creation date (newest 
 #	   first). If the repository is remote we can get tags only in alphabetical order.
 #
-#USAGE: sh git2prop.sh [-t] [-b] [-p property-file] [-r git-repository]
+#USAGE: sh git2prop.sh [-t] [-T tag-prefix] [-b] [-b branch-prefix] [-p property-file] [-r git-repository]
 # [-t] tags will be added to the 'tags' property (optional) 
 # [-T tag-prefix] specified string will be used as prefix to filter tags (optional)
 # [-b] branches will be added to the 'branches' property (optional)
