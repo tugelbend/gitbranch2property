@@ -75,11 +75,12 @@ if [ $ADDTAGS -gt 0 ]; then
 		#repo is local, we can sort tags by date
 		TFILTER="/refs\/tags\/${TPREFIX}/ {print \$1}"
 		cd $REPO
-		#here we only need the 'tags' part before the tag-name
+		#here we only need the 'tags' part before t:qhe tag-name
 		/usr/bin/git for-each-ref --sort=-taggerdate --format '%(refname)' refs/tags | /usr/bin/awk "${TFILTER}" |/bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
 	else
 		#repo is remote, we will get tags in alphabetical order
-		TFILTER="/refs\/tags\/${TPREFIX}/ {print \$2}"
+    #to not show the tags ending on "^{}" we make sure we get only lines with an aplhanumeric ending
+		TFILTER="/refs\/tags\/${TPREFIX}(.)*([a-zA-Z0-9])$/ {print \$2}"
 		#here we only need the 'tags' part before the tag-name
 		/usr/bin/git ls-remote -t $REPO | /usr/bin/awk "${TFILTER}" | /bin/sed s%^refs/%% | /usr/bin/tr '\n' ',' >> ${PROPFILE}
 	fi
